@@ -1,7 +1,35 @@
 /*
- * Create a list that holds all of your cards
+ *  Follwing codes will be executed after all DOMs are rendered on window
  */
 
+// TODO: render win page
+// TODO: add timer
+
+/*
+ *  Constants
+ */
+
+const DECK_SIZE = 16;
+const CARD_DISPLAY_TIME = 1000
+let openedCard = [];
+let matchedCard = [];
+let counter = 0;
+let cards =   [ "fa fa-diamond",
+                "fa fa-paper-plane-o",
+                "fa fa-anchor",
+                "fa fa-bolt",
+                "fa fa-cube",
+                "fa fa-leaf",
+                "fa fa-bicycle",
+                "fa fa-bomb",
+                "fa fa-diamond",
+                "fa fa-paper-plane-o",
+                "fa fa-anchor",
+                "fa fa-bolt",
+                "fa fa-cube",
+                "fa fa-leaf",
+                "fa fa-bicycle",
+                "fa fa-bomb",    ];    // name of cards, must be in pairs!
 
 /*
  * Display the cards on the page
@@ -9,6 +37,112 @@
  *   - loop through each card and create its HTML
  *   - add each card's HTML to the page
  */
+
+// Shuffle cards
+cards = shuffle(cards);
+
+// Create deck DOM
+const deck = document.createElement('ul');
+deck.className = "deck";
+
+// In each loop, create a cardWrapper with a card and append the wrapper to deck
+for(let i = 0; i < DECK_SIZE; i++) {
+ const cardWrapper = document.createElement("li");
+ cardWrapper.className = "card";
+ cardWrapper.appendChild(createCard(cards[i]))
+ deck.appendChild(cardWrapper);
+}
+
+// Paint the DOM onto html page
+container = document.querySelector("div.container")
+container.appendChild(deck);
+
+
+/*
+ * set up the event listener for a card. If a card is clicked
+ */
+
+deck.addEventListener("click", function functionName(e) {
+  const selectedCard = e.target;
+  // check if the card not the others were clicked
+  if((selectedCard.nodeName.toLowerCase() === 'li') && (selectedCard.className === "card")) {
+    // display the card and insert it into the openedCard list
+    displayCard(e.target);
+    openedCard.push(selectedCard);
+    if(openedCard.length == 2) {
+      // if two cards are opened, check if they match
+      if(isSameCard(openedCard[0],openedCard[1])) {
+        console.log("same card.");
+        // move the matched cards to matchedCard list
+        matchedCard.push(openedCard.pop());
+        matchedCard.push(openedCard.pop());
+      }
+      else {
+        console.log("different card");
+        // hide and empty opened card
+        hideCard(openedCard.pop());
+        hideCard(openedCard.pop());
+      }
+      // check win?
+      if(matchedCard.length === DECK_SIZE) {
+        // TODO render a message for win!
+        console.log("win");
+      }
+      else {
+        // update counters
+        counter += 1;
+        // render counters
+        document.querySelector("span.moves").textContent = counter;
+        // render stars
+        if ((counter % 3) === 0) {
+          stars = document.querySelector("ul.stars")
+          stars.removeChild(stars.lastElementChild);
+        }
+      }
+    }
+  }
+});
+
+/*
+ * set up the event listener for a restart buttom.
+ * button clicked ==> refresh the page
+ */
+document.querySelector("div.restart").addEventListener('click', function () {
+  location.reload();
+})
+
+
+/*
+ * utility functions ==> rendering
+ */
+
+// This function creates <i></i> DOM to represent card
+function createCard(cardName) {
+ const newCard = document.createElement('i');
+ newCard.className = cardName;
+ return newCard;
+}
+
+// flip the card through CSS class
+function displayCard(cardWrapper) {
+  cardWrapper.className = "card open show";
+}
+
+// flip the card through CSS class, set timeout = 1ms allowing card to be displayed
+function hideCard(cardWrapper) {
+  setTimeout(function() {
+    cardWrapper.className = "card";
+  }, CARD_DISPLAY_TIME)
+}
+
+/*
+ * utility functions ==> logic
+ */
+
+// compare if two cards are same
+function isSameCard(cardWrapper1,cardWrapper2) {
+  return (cardWrapper1.firstChild.className === cardWrapper2.firstChild.className)
+}
 
 // Shuffle function from http://stackoverflow.com/a/2450976
 function shuffle(array) {
@@ -24,15 +158,3 @@ function shuffle(array) {
 
     return array;
 }
-
-
-/*
- * set up the event listener for a card. If a card is clicked:
- *  - display the card's symbol (put this functionality in another function that you call from this one)
- *  - add the card to a *list* of "open" cards (put this functionality in another function that you call from this one)
- *  - if the list already has another card, check to see if the two cards match
- *    + if the cards do match, lock the cards in the open position (put this functionality in another function that you call from this one)
- *    + if the cards do not match, remove the cards from the list and hide the card's symbol (put this functionality in another function that you call from this one)
- *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
- *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
- */
