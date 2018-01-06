@@ -10,7 +10,9 @@
  */
 
 const DECK_SIZE = 16;
-const CARD_DISPLAY_TIME = 1000
+const CARD_DISPLAY_TIME = 1000;
+const STAR_MAXIMUM = 3
+const STAR_DROPPING_RATE = 3;
 let openedCard = [];
 let matchedCard = [];
 let counter = 0;
@@ -39,7 +41,7 @@ let cards =   [ "fa fa-diamond",
  */
 
 // Shuffle cards
-cards = shuffle(cards);
+// cards = shuffle(cards);
 
 // Create deck DOM
 const deck = document.createElement('ul');
@@ -85,8 +87,8 @@ deck.addEventListener("click", function functionName(e) {
       }
       // check win?
       if(matchedCard.length === DECK_SIZE) {
-        // TODO render a message for win!
-        console.log("win");
+        starAcq = counterToStars(counter);
+        displayCongratModal(starAcq);
       }
       else {
         // update counters
@@ -94,7 +96,7 @@ deck.addEventListener("click", function functionName(e) {
         // render counters
         document.querySelector("span.moves").textContent = counter;
         // render stars
-        if ((counter % 3) === 0) {
+        if ((counter % STAR_DROPPING_RATE) === 0) {
           stars = document.querySelector("ul.stars")
           stars.removeChild(stars.lastElementChild);
         }
@@ -111,6 +113,9 @@ document.querySelector("div.restart").addEventListener('click', function () {
   location.reload();
 })
 
+document.querySelector("button.close").addEventListener('click', function () {
+  location.reload();
+})
 
 /*
  * utility functions ==> rendering
@@ -135,9 +140,31 @@ function hideCard(cardWrapper) {
   }, CARD_DISPLAY_TIME)
 }
 
+function displayCongratModal(starAcq) {
+  // prepare modal
+  paraCongrat = document.createElement('p');
+  paraInstruction = document.createElement('p');
+  // insert number of stars acquired
+  paraCongrat.textContent = "Congrat! You won " + starAcq + " stars!";
+  paraInstruction.textContent = "Click the X to start a new game.";
+  document.querySelector("div.modal-content").appendChild(paraCongrat);
+  document.querySelector("div.modal-content").appendChild(paraInstruction);
+  // display modal
+  document.querySelector("div.modal").style.display = "block"
+}
+
 /*
  * utility functions ==> logic
  */
+
+
+// counter to stars
+function counterToStars(counter) {
+  const starAcq = STAR_MAXIMUM-parseInt(counter/STAR_DROPPING_RATE);
+  // if starAcq > 0 return starAcq otherwise return 0
+  return starAcq > 0 ? starAcq : 0;
+
+}
 
 // compare if two cards are same
 function isSameCard(cardWrapper1,cardWrapper2) {
