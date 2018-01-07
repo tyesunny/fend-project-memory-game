@@ -2,9 +2,6 @@
  *  Follwing codes will be executed after all DOMs are rendered on window
  */
 
-// TODO: render win page
-// TODO: add timer
-
 /*
  *  Constants
  */
@@ -12,7 +9,7 @@
 const DECK_SIZE = 16;
 const CARD_DISPLAY_TIME = 1000;
 const STAR_MAXIMUM = 3
-const STAR_DROPPING_RATE = 3;
+const STAR_DROPPING_RATE = 8;
 let openedCard = [];
 let matchedCard = [];
 let counter = 0;
@@ -41,23 +38,27 @@ let cards =   [ "fa fa-diamond",
  */
 
 // Shuffle cards
-// cards = shuffle(cards);
-
+cards = shuffle(cards);
 // Create deck DOM
 const deck = document.createElement('ul');
 deck.className = "deck";
-
-// In each loop, create a cardWrapper with a card and append the wrapper to deck
 for(let i = 0; i < DECK_SIZE; i++) {
- const cardWrapper = document.createElement("li");
- cardWrapper.className = "card";
- cardWrapper.appendChild(createCard(cards[i]))
- deck.appendChild(cardWrapper);
+  // In each loop, create a cardWrapper with a card and append the wrapper to deck
+  const cardWrapper = document.createElement("li");
+  cardWrapper.className = "card";
+  cardWrapper.appendChild(createCard(cards[i]))
+  deck.appendChild(cardWrapper);
 }
-
 // Paint the DOM onto html page
 container = document.querySelector("div.container")
 container.appendChild(deck);
+// Start timer
+startTime = Date.now();
+timerInterval = setInterval(function() {
+    totalTime = Date.now() - startTime;
+    formattedTime = formatTime(totalTime);
+    document.querySelector("span.timer").textContent = `${formattedTime.minutes}:${formattedTime.seconds}`;
+}, 1000);
 
 
 /*
@@ -85,17 +86,21 @@ deck.addEventListener("click", function functionName(e) {
         hideCard(openedCard.pop());
         hideCard(openedCard.pop());
       }
-      // check win?
+      // check if game won.
       if(matchedCard.length === DECK_SIZE) {
+        // game won, stop timer
+        clearInterval(timerInterval);
+        // calculate number of stars won
         starAcq = counterToStars(counter);
-        displayCongratModal(starAcq);
+        // render congrat modal
+        displayCongratModal(starAcq, formattedTime);
       }
       else {
         // update counters
         counter += 1;
         // render counters
         document.querySelector("span.moves").textContent = counter;
-        // render stars
+        // render stars every STAR_DROPPING_RATE moves
         if ((counter % STAR_DROPPING_RATE) === 0) {
           stars = document.querySelector("ul.stars")
           stars.removeChild(stars.lastElementChild);
@@ -106,13 +111,17 @@ deck.addEventListener("click", function functionName(e) {
 });
 
 /*
- * set up the event listener for a restart buttom.
+ * set up the event listener for a restart button.
  * button clicked ==> refresh the page
  */
 document.querySelector("div.restart").addEventListener('click', function () {
   location.reload();
 })
 
+/*
+ * set up the event listener for a close buttom.
+ * button clicked ==> refresh the page
+ */
 document.querySelector("button.close").addEventListener('click', function () {
   location.reload();
 })
@@ -140,18 +149,20 @@ function hideCard(cardWrapper) {
   }, CARD_DISPLAY_TIME)
 }
 
-function displayCongratModal(starAcq) {
+// generate congrat modal
+function displayCongratModal(starAcq, formattedTime) {
   // prepare modal
   paraCongrat = document.createElement('p');
   paraInstruction = document.createElement('p');
   // insert number of stars acquired
-  paraCongrat.textContent = "Congrat! You won " + starAcq + " stars!";
+  paraCongrat.textContent = `Congrat! You won ${starAcq} stars in ${formattedTime.minutes}:${formattedTime.seconds}!`;
   paraInstruction.textContent = "Click the X to start a new game.";
   document.querySelector("div.modal-content").appendChild(paraCongrat);
   document.querySelector("div.modal-content").appendChild(paraInstruction);
   // display modal
   document.querySelector("div.modal").style.display = "block"
 }
+
 
 /*
  * utility functions ==> logic
@@ -182,6 +193,28 @@ function shuffle(array) {
         array[currentIndex] = array[randomIndex];
         array[randomIndex] = temporaryValue;
     }
-
     return array;
 }
+
+
+/**
+ * This function is from project: https://github.com/egarat/fend-memory-game
+ * as of 1/6/2018
+ * @function formatTime
+ * @description Converts miliseconds to an object separated as minutes and seconds (if seconds < 10, then it has a preceding 0)
+ * @param {number} ms - Time to convert to an object
+ * @returns {Object} with two properties (minutes, seconds)
+ */
+const formatTime = function(ms) {
+    // Convert ms to s
+    const unformattedSeconds = Math.floor(ms / 1000);
+    // If applies, extract amount of minutes
+    const minutes = unformattedSeconds >= 60 ? Math.floor(unformattedSeconds / 60) : 0;
+    // Removing the minutes and get the rest of the time as seconds
+    const seconds = minutes > 0 ? unformattedSeconds - (minutes * 60) : unformattedSeconds;
+
+    return {
+        minutes,
+        seconds: seconds < 10 ? '0' + seconds : seconds
+    };
+};
