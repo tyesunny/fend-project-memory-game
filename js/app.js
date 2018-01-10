@@ -9,7 +9,9 @@
 const DECK_SIZE = 16;
 const CARD_DISPLAY_TIME = 1000;
 const STAR_MAXIMUM = 3
+const STAR_MINIMUM = 1
 const STAR_DROPPING_RATE = 8;
+let gameStarted = false;
 let openedCard = [];
 let matchedCard = [];
 let counter = 0;
@@ -52,12 +54,13 @@ for(let i = 0; i < DECK_SIZE; i++) {
 // Paint the DOM onto html page
 container = document.querySelector("div.container")
 container.appendChild(deck);
-// Start timer
-startTime = Date.now();
+// Timer: only activate after the gameStarted flag is on
 timerInterval = setInterval(function() {
+  if (gameStarted) {
     totalTime = Date.now() - startTime;
     formattedTime = formatTime(totalTime);
     document.querySelector("span.timer").textContent = `${formattedTime.minutes}:${formattedTime.seconds}`;
+  }
 }, 1000);
 
 
@@ -69,6 +72,11 @@ deck.addEventListener("click", function functionName(e) {
   const selectedCard = e.target;
   // check if the card not the others were clicked
   if((selectedCard.nodeName.toLowerCase() === 'li') && (selectedCard.className === "card")) {
+    // start the timer and turn on the gameStarted flag
+    if (!gameStarted) {
+      gameStarted = true;
+      startTime = Date.now();
+    }
     // display the card and insert it into the openedCard list
     displayCard(e.target);
     openedCard.push(selectedCard);
@@ -79,31 +87,29 @@ deck.addEventListener("click", function functionName(e) {
         // move the matched cards to matchedCard list
         matchedCard.push(openedCard.pop());
         matchedCard.push(openedCard.pop());
+        // check if game won.
+        if(matchedCard.length === DECK_SIZE) {
+          // game won, stop timer
+          clearInterval(timerInterval);
+          // calculate number of stars won
+          starAcq = counterToStars(counter);
+          // render congrat modal
+          displayCongratModal(starAcq, formattedTime);
+        }
       }
       else {
         console.log("different card");
         // hide and empty opened card
         hideCard(openedCard.pop());
         hideCard(openedCard.pop());
-      }
-      // check if game won.
-      if(matchedCard.length === DECK_SIZE) {
-        // game won, stop timer
-        clearInterval(timerInterval);
-        // calculate number of stars won
-        starAcq = counterToStars(counter);
-        // render congrat modal
-        displayCongratModal(starAcq, formattedTime);
-      }
-      else {
         // update counters
         counter += 1;
         // render counters
         document.querySelector("span.moves").textContent = counter;
-        // render stars every STAR_DROPPING_RATE moves
+        // render stars every STAR_DROPPING_RATE moves, only when we have greater than 1 star
         if ((counter % STAR_DROPPING_RATE) === 0) {
-          stars = document.querySelector("ul.stars")
-          stars.removeChild(stars.lastElementChild);
+          // replot stars
+          plotStars(counterToStars(counter));
         }
       }
     }
@@ -116,6 +122,7 @@ deck.addEventListener("click", function functionName(e) {
  */
 document.querySelector("div.restart").addEventListener('click', function () {
   location.reload();
+  runTimer();
 })
 
 /*
@@ -164,16 +171,35 @@ function displayCongratModal(starAcq, formattedTime) {
 }
 
 
+// plot n stars
+function plotStars(n) {
+  // select the stars ul tag
+  let stars = document.querySelector("ul.stars")
+  // remove all stars
+  while (stars.firstChild) {
+      stars.removeChild(stars.firstChild);
+  }
+  // plot n stars
+  for (let i = 0; i < n; i++) {
+    const star = document.createElement("li");
+    star.innerHTML = '<i class="fa fa-star"></i>'
+    stars.appendChild(star);
+  }
+}
+
+
+
+
+
+
 /*
  * utility functions ==> logic
  */
-
-
 // counter to stars
 function counterToStars(counter) {
   const starAcq = STAR_MAXIMUM-parseInt(counter/STAR_DROPPING_RATE);
   // if starAcq > 0 return starAcq otherwise return 0
-  return starAcq > 0 ? starAcq : 0;
+  return starAcq > STAR_MINIMUM ? starAcq : STAR_MINIMUM;
 
 }
 
